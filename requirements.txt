@@ -1,0 +1,7 @@
+mcp[cli]
+SQLAlchemy >= 2.0
+asyncpg
+pydantic >= 2.0
+pydantic-settings
+python-dotenv
+uvicorn
