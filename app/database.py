@@ -39,7 +39,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def create_table() -> None:
+async def create_tables():
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 

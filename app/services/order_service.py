@@ -28,7 +28,7 @@ async def get_order(session: AsyncSession, order_id: int) -> OrderResult:
                 product_id=item.product_id,
                 product_name=item.product.name,
                 quantity=item.quantity,
-                unit_price=item.unit_pricce,
+                unit_price=item.unit_price,
             )
             for item in order.items
         ]
