@@ -1,7 +1,6 @@
 import json
 import asyncio
 from mcp.server import MCPServer
-from pygments.lexers import web
 
 from app.database import create_tables, SessionLocal
 from app.services.order_service import get_order

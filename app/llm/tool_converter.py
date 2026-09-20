@@ -24,6 +24,35 @@ UNSUPPORTED_KEYS = {
     "definitions",
 }
 
+"""
+ধরা যাক MCP থেকে schema এসেছে:
+schema = {
+    "type": "object",
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False
+            }
+        }
+    }
+}
+
+Gemini additionalProperties accept করছে না। তাই আগে বলে দিতে হবে:
+
+UNSUPPORTED_KEYS = {
+    "additionalProperties",
+}
+
+এর অর্থ, এই নামের key পাওয়া গেলে schema থেকে বাদ দিতে হবে। এটা শুধু একটি list/set of forbidden keys।
+"""
+
+
+"""
+UNSUPPORTED_KEYS শুধু জানে কোন key remove করতে হবে কিন্তু জানে না schema-এর কোথায় key-টা আছে
+তাই normalize_schema() দরকার।
+"""
 
 def normalize_schema(schema: dict[str, Any]) -> dict[str, Any]:
     """
@@ -58,6 +87,57 @@ def normalize_schema(schema: dict[str, Any]) -> dict[str, Any]:
             result[key] = value
 
     return result
+
+"""
+-> normalize_schema()
+এটা পুরো schema-এর ভিতর recursively search করে।
+
+MCP Schema
+   │
+   ├── type
+   │
+   ├── properties
+   │      │
+   │      └── items
+   │            │
+   │            └── array items
+   │                   │
+   │                   └── additionalProperties ❌
+   │
+   └── required
+
+JSON Schema nested হতে পারে। additionalProperties শুধু top-level-এ থাকবে এমন নয়; properties, items, বা আরও nested object-এর ভিতরেও থাকতে পারে। normalize_schema() প্রতিটি nested dictionary এবং list-এর ভিতরে গিয়ে একইভাবে schema clean করে।
+"""
+
+"""
+Problem: Tool like, create_order_tool:
+
+create_order_tool(
+    customer_id: int,
+    items: list[...]
+)
+
+এখানে items হলো list/array।
+
+object
+├── customer_id → integer
+└── items       → array
+                  │
+                  ├── item 1 → object
+                  ├── item 2 → object
+                  └── item 3 → object
+
+customer_id একটি simple integer। কিন্তু items একটি array, এবং array-এর প্রতিটি element একটি structured object। তাই items-এর schema naturally বেশি complex এবং nested।
+"""
+
+"""
+create_order_tool define করা:
+
+async def create_order_tool(customer_id: int, items: list[OrderItem]):
+    pass
+
+    
+"""
 
 def mcp_tool_to_gemini_function(tool: Any):
     parameters = normalize_schema(tool.input_schema)
